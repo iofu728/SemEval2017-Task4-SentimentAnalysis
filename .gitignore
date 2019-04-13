@@ -1,0 +1,54 @@
+# python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# test
+test*
+Untitled*
+
+log
+checkpoints
+
+# data
+data
+*.txt
+*.csv
+*.tar.gz
+*.zip
+
+# idea
+.idea
+.vscode
+
+# py compile file
+*.pyc
+*.pyo
+
+# env
+.venv
+.env
+.venv
+env
+venv
+ENV
+env.bak
+venv.bak
+
+# paper
+paper
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# data
+checkpoint
+pickle
+result
