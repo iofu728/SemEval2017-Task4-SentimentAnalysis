@@ -52,3 +52,5 @@ pip-delete-this-directory.txt
 checkpoint
 pickle
 result
+
+*.Ds_store
