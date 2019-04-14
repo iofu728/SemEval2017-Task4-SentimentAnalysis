@@ -2,11 +2,11 @@
 @Author: gunjianpan
 @Date:   2019-04-13 16:16:52
 @Last Modified by:   gunjianpan
-@Last Modified time: 2019-04-13 17:23:58
+@Last Modified time: 2019-04-14 18:53:06
 '''
 
 import nltk
-import numpy
+import numpy as np
 import os
 import pickle
 
@@ -41,7 +41,7 @@ def bow_model(task, max_features=10000):
         algo = LogisticRegression(C=0.6, random_state=0,
                                   class_weight='balanced')
     elif task == "reg":
-        algo = SVR(kernel='linear', C=0.6)
+        algo = LinearSVR()
     else:
         raise ValueError("invalid task!")
 
@@ -118,7 +118,7 @@ class CustomPreProcessor(BaseEstimator, TransformerMixin):
                 processed = list(self.pre_process_steps(X))
                 with open('{}.pickle'.format(len(X)), 'wb') as handle:
                     pickle.dump(processed, handle)
-            return numpy.array(processed)
+            return np.array(processed)
         else:
             processed = self.pre_process_steps(X)
             return processed
@@ -141,14 +141,14 @@ class NBOWVectorizer(BaseEstimator, TransformerMixin):
         feats = []
         for method in self.aggregation:
             if method == "sum":
-                feats.append(numpy.sum(vectors, axis=0))
+                feats.append(np.sum(vectors, axis=0))
             if method == "mean":
-                feats.append(numpy.mean(vectors, axis=0))
+                feats.append(np.mean(vectors, axis=0))
             if method == "min":
-                feats.append(numpy.amin(vectors, axis=0))
+                feats.append(np.amin(vectors, axis=0))
             if method == "max":
-                feats.append(numpy.amax(vectors, axis=0))
-        return numpy.hstack(feats)
+                feats.append(np.amax(vectors, axis=0))
+        return np.hstack(feats)
 
     def transform(self, X, y=None):
         docs = []
@@ -161,8 +161,8 @@ class NBOWVectorizer(BaseEstimator, TransformerMixin):
                     continue
                 vectors.append(self.embeddings[self.word2idx[word]])
             if len(vectors) == 0:
-                vectors.append(numpy.zeros(self.dim))
-            feats = self.aggregate_vecs(numpy.array(vectors))
+                vectors.append(np.zeros(self.dim))
+            feats = self.aggregate_vecs(np.array(vectors))
             docs.append(feats)
         return docs
 
