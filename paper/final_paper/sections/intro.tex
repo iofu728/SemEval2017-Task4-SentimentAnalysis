@@ -1,0 +1,13 @@
+\section{Introduction}
+
+Sentiment Analysis is a typical task in Natural Language Processing (NLP) domain. It is easy to start with some very simple method (e.g. positive - negative words counting). But If you want to get a good result, It is difficult. Because Twitter dataSet is informal and creative writing style. It means that you will encounter lots of out-of-vocabulary (OOV) situation. So maybe embedding is a very important point in the task. The practical applications of this task are wide, from personalized recommendation, chatbot, to public opinion monitoring(e.g. Presidential debates, World Cup, etc.).
+
+In the last few years, deep learning techniques have significantly out-performed traditional methods in several NLP tasks,  and sentiment analysis is no exception to this trend. Especially Bert published on last year. Two of the most popular deep learning techniques for sentiment analysis are TextCNNs and Transform model like Bert. In this paper, we evaluation both two model.
+
+In this paper, we present two deep-learning systems that competed at SemEval-2017 Task 4. Our first model base on a single-layer CNN model, equipped with 3 filters. The other model base on Bert which is a pre-training and fine-tuning model by the multi-layer transform.
+
+\begin{itemize}
+  \item  We evaluation this task in some traditional model, like SVM, LR. In this model, we get some decent result. We also used a text processor to change text format, like change `HTTP://' to `$<$url$>$'. It reduces the bag of word size, and reduce the out-of-vocabulary (OOV) situation.
+  \item A pre-train embedding basing on RepLab 2013 Dataset. And we train this embedding in two way, word2vec and fastText. We find that the model pre-train by fastText work is better than pre-training by word2vec in LogisticRegression. So we choose the embedding by fastText as encoder tools.
+  \item And we train model in textCNN \& Bert. we also evaluate the effect of pad position. All code can be found in github.\footnote{github.com/iofu728/SemEval2017-Task4-SentimentAnalysis.}
+\end{itemize}

@@ -1,0 +1,35 @@
+\section{Experiments}
+\label{sec:experiments}
+
+In this section, we evaluate in embedding, text processor, model.
+
+\subsection{Embedding}
+\label{sec:embedding}
+
+Word embedding almost the important thing in NLP task. So we take some word embedding method and train dataSet to tune the effect of word embedding.
+
+First of all, the train dataSet of competition is so small that the effect of training word embedding is bad. So we import some outer dataSet to optimization the effect of word embedding. The domain of our task is about scientific papers. So, we load dataset on RepLab 2013 Dataset. 
+
+We also do some work on different word embedding methods, like word2vec, fastText. FatsText do the best job in our experiment. Bert doesn't have a good effect on our task. We think it may be caused by the difficult word style between pre-train model and twitter dataSet.
+
+\subsection{TextCNN}
+\label{sec:textCNN}
+
+\input{figures/text_cnn.tex}
+\input{figures/bert.tex}
+
+Word embedding almost the important thing in NLP task. So we take some word embedding method and train dataSet to tune the effect of word embedding.
+
+First of all, the train dataSet of competition is so small that the effect of training word embedding is bad. So we import some outer dataSet to optimization the effect of word embedding. The domain of our task is about scientific papers. So, we load dataset on RepLab 2013 Dataset. 
+
+We also do some work on different word embedding methods, like word2vec, fastText. FatsText do the best job in our experiment. Bert doesn't have a good effect on our task. We think it may be caused by the difficult word style between pre-train model and twitter dataSet.
+
+The lens between two entities is different in dataSet. TextCNN needs every sentence to have the same lens, so a naive idea is to change the pad position.  We can put '[PAD]' before the first word, after the first word, before the latest word, after the latest word. The result of 4 methods should be different. So we take some experimentation to explore this problem. We use TextCNN with Train dataSet, use 256 filters, filter size=[6,7,8], embedding size=300, learning rate = 0.0003, batch size = 64, decay step=1000..
+
+The evaluation shows that padding position is a vital parameter in our model. In all subTask, we found that adding pad before entity1 is a good way to improve the performance of our model.
+
+\subsection{Bert}
+\label{sec:bert}
+
+Compare with pre-training Bert with fine-tune Bert, the score significantly Improve. The position embedding \& Transformer construction work well to obtain information in context. In the future, we want to combine TextCNN \& Bert, using TextCNN instead of Transform to evaluate the effect of Transform. 
+
