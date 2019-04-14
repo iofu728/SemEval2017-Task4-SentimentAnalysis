@@ -2,7 +2,7 @@
 @Author: gunjianpan
 @Date:   2019-04-12 22:13:26
 @Last Modified by:   gunjianpan
-@Last Modified time: 2019-04-13 14:53:40
+@Last Modified time: 2019-04-15 01:12:47
 '''
 
 from constant import *
@@ -163,7 +163,7 @@ class TextCNN:
                 h = tf.nn.relu(tf.nn.bias_add(conv, b), "relu")
 
                 ''' RESHAPE '''
-                # shape:[batch_size,sequence_length,num_filters,1]
+                shape: [batch_size, sequence_length, num_filters, 1]
                 h = tf.reshape(
                     h, [-1, self.sequence_length, self.num_filters, 1])
 

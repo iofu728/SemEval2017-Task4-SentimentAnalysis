@@ -2,7 +2,7 @@
 @Author: gunjianpan
 @Date:   2019-04-12 22:12:46
 @Last Modified by:   gunjianpan
-@Last Modified time: 2019-04-13 21:31:41
+@Last Modified time: 2019-04-14 09:45:50
 '''
 
 import tensorflow as tf
@@ -136,7 +136,7 @@ def main(_):
                 eval_loss, f1, r, p, acc = do_eval(
                     sess, textCNN, testX, testY, num_class)
                 print("%s Epoch %d Test Loss:%.3f\tR:%.3f\tP:%.3f\tF1 Score:%.3f\tacc:%.3f" % (
-                    time_str(), epoch, eval_loss, r, p, f1, acc))
+                    time_str(), epoch, eval_loss, r*100, p*100, f1*100, acc*100))
 
         ''' print train best '''
         print("%s Train MAX F1_micro:%.3f|%.3f|%.3f|%.3f" %
@@ -172,12 +172,18 @@ def do_eval(sess, textCNN, evalX, evalY, num_class):
 
 
 def load_data():
-    train_set = SemEvalDataLoader(verbose=False, ekphrasis=FLAGS.ekphrasis).get_data(task="A",
-                                                                                     years=None,
-                                                                                     datasets=None,
-                                                                                     only_semEval=True)
-    test_data = SemEvalDataLoader(
-        verbose=False, ekphrasis=FLAGS.ekphrasis).get_gold(task="A")
+    data_path = '{}data_{}.pkl'.format(pickle_dir, FLAGS.ekphrasis)
+    if os.path.exists(data_path):
+        print(11111)
+        train_set, test_data = pickle.load(open(data_path, 'rb'))
+    else:
+        train_set = SemEvalDataLoader(verbose=False, ekphrasis=FLAGS.ekphrasis).get_data(task="A",
+                                                                                         years=None,
+                                                                                         datasets=None,
+                                                                                         only_semEval=True)
+        test_data = SemEvalDataLoader(
+            verbose=False, ekphrasis=FLAGS.ekphrasis).get_gold(task="A")
+        pickle.dump([train_set, test_data], open(data_path, 'wb'))
     X = [obs[1] for obs in train_set]
     y = [label2id[obs[0]] for obs in train_set]
     X_test = [obs[1] for obs in test_data]
