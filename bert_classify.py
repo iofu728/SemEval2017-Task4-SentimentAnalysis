@@ -2,7 +2,7 @@
 @Author: gunjianpan
 @Date:   2019-04-13 20:27:51
 @Last Modified by:   gunjianpan
-@Last Modified time: 2019-04-13 22:19:34
+@Last Modified time: 2019-04-15 01:14:13
 '''
 from __future__ import absolute_import
 from __future__ import division
@@ -12,6 +12,7 @@ import collections
 import csv
 import os
 import numpy as np
+import pickle
 import bert.modeling as modeling
 import bert.optimization as optimization
 import bert.tokenization as tokenization
@@ -25,6 +26,7 @@ from data_load import SemEvalDataLoader
 flags = tf.flags
 
 FLAGS = flags.FLAGS
+tf.data.experimental.ignore_errors()
 
 bert_dir = '../../../../bert/uncased_L-24_H-1024_A-16/'
 # Required parameters
@@ -65,9 +67,9 @@ flags.DEFINE_integer(
     "Sequences longer than this will be truncated, and sequences shorter "
     "than this will be padded.")
 
-flags.DEFINE_bool("do_train", True, "Whether to run training.")
+flags.DEFINE_bool("do_train", False, "Whether to run training.")
 
-flags.DEFINE_bool("do_eval", True, "Whether to run eval on the dev set.")
+flags.DEFINE_bool("do_eval", False, "Whether to run eval on the dev set.")
 
 flags.DEFINE_bool(
     "do_predict", True,
@@ -175,84 +177,6 @@ class InputFeatures(object):
         self.is_real_example = is_real_example
 
 
-class DataProcessor(object):
-    """Base class for data converters for sequence classification data sets."""
-
-    def get_train_examples(self, data_dir):
-        """Gets a collection of `InputExample`s for the train set."""
-        raise NotImplementedError()
-
-    def get_dev_examples(self, data_dir):
-        """Gets a collection of `InputExample`s for the dev set."""
-        raise NotImplementedError()
-
-    def get_test_examples(self, data_dir):
-        """Gets a collection of `InputExample`s for prediction."""
-        raise NotImplementedError()
-
-    def get_labels(self):
-        """Gets the list of labels for this data set."""
-        raise NotImplementedError()
-
-    @classmethod
-    def _read_tsv(cls, input_file, quotechar=None):
-        """Reads a tab separated value file."""
-        with tf.gfile.Open(input_file, "r") as f:
-            reader = csv.reader(f, delimiter="\t", quotechar=quotechar)
-            lines = []
-            for line in reader:
-                lines.append(line)
-            return lines
-
-
-class XnliProcessor(DataProcessor):
-    """Processor for the XNLI data set."""
-
-    def __init__(self):
-        self.language = "zh"
-
-    def get_train_examples(self, data_dir):
-        """See base class."""
-        lines = self._read_tsv(
-            os.path.join(data_dir, "multinli",
-                         "multinli.train.%s.tsv" % self.language))
-        examples = []
-        for (i, line) in enumerate(lines):
-            if i == 0:
-                continue
-            guid = "train-%d" % (i)
-            text_a = tokenization.convert_to_unicode(line[0])
-            text_b = tokenization.convert_to_unicode(line[1])
-            label = tokenization.convert_to_unicode(line[2])
-            if label == tokenization.convert_to_unicode("contradictory"):
-                label = tokenization.convert_to_unicode("contradiction")
-            examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
-        return examples
-
-    def get_dev_examples(self, data_dir):
-        """See base class."""
-        lines = self._read_tsv(os.path.join(data_dir, "xnli.dev.tsv"))
-        examples = []
-        for (i, line) in enumerate(lines):
-            if i == 0:
-                continue
-            guid = "dev-%d" % (i)
-            language = tokenization.convert_to_unicode(line[0])
-            if language != tokenization.convert_to_unicode(self.language):
-                continue
-            text_a = tokenization.convert_to_unicode(line[6])
-            text_b = tokenization.convert_to_unicode(line[7])
-            label = tokenization.convert_to_unicode(line[1])
-            examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
-        return examples
-
-    def get_labels(self):
-        """See base class."""
-        return ["contradiction", "entailment", "neutral"]
-
-
 class SemEval2017Task4Processor(DataProcessor):
     """ SemEval 2017 Task 4 subTask 4 Processor (Multi-class) """
 
@@ -272,12 +196,18 @@ class SemEval2017Task4Processor(DataProcessor):
         return list(range(num_class))
 
     def load_data(self):
-        train_set = SemEvalDataLoader(verbose=False, ekphrasis=FLAGS.ekphrasis).get_data(task="A",
-                                                                                         years=None,
-                                                                                         datasets=None,
-                                                                                         only_semEval=True)
-        test_data = SemEvalDataLoader(
-            verbose=False, ekphrasis=FLAGS.ekphrasis).get_gold(task="A")
+        data_path = '{}data_{}.pkl'.format(pickle_dir, FLAGS.ekphrasis)
+        if os.path.exists(data_path):
+            print(11111)
+            train_set, test_data = pickle.load(open(data_path, 'rb'))
+        else:
+            train_set = SemEvalDataLoader(verbose=False, ekphrasis=FLAGS.ekphrasis).get_data(task="A",
+                                                                                             years=None,
+                                                                                             datasets=None,
+                                                                                             only_semEval=True)
+            test_data = SemEvalDataLoader(
+                verbose=False, ekphrasis=FLAGS.ekphrasis).get_gold(task="A")
+            pickle.dump([train_set, test_data], open(data_path, 'wb'))
         X = [obs[1] for obs in train_set]
         y = [label2id[obs[0]] for obs in train_set]
         X_test = [obs[1] for obs in test_data]
@@ -302,87 +232,6 @@ class SemEval2017Task4Processor(DataProcessor):
         self.dev = dev
         self.test = test
         self.test_Y = test_Y
-
-
-class MrpcProcessor(DataProcessor):
-    """Processor for the MRPC data set (GLUE version)."""
-
-    def get_train_examples(self, data_dir):
-        """See base class."""
-        return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "train.tsv")), "train")
-
-    def get_dev_examples(self, data_dir):
-        """See base class."""
-        return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev")
-
-    def get_test_examples(self, data_dir):
-        """See base class."""
-        return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "test.tsv")), "test")
-
-    def get_labels(self):
-        """See base class."""
-        return ["0", "1"]
-
-    def _create_examples(self, lines, set_type):
-        """Creates examples for the training and dev sets."""
-        examples = []
-        for (i, line) in enumerate(lines):
-            if i == 0:
-                continue
-            guid = "%s-%s" % (set_type, i)
-            text_a = tokenization.convert_to_unicode(line[3])
-            text_b = tokenization.convert_to_unicode(line[4])
-            if set_type == "test":
-                label = "0"
-            else:
-                label = tokenization.convert_to_unicode(line[0])
-            examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
-        return examples
-
-
-class ColaProcessor(DataProcessor):
-    """Processor for the CoLA data set (GLUE version)."""
-
-    def get_train_examples(self, data_dir):
-        """See base class."""
-        return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "train.tsv")), "train")
-
-    def get_dev_examples(self, data_dir):
-        """See base class."""
-        return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev")
-
-    def get_test_examples(self, data_dir):
-        """See base class."""
-        return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, "test.tsv")), "test")
-
-    def get_labels(self):
-        """See base class."""
-        return ["0", "1"]
-
-    def _create_examples(self, lines, set_type):
-        """Creates examples for the training and dev sets."""
-        examples = []
-        for (i, line) in enumerate(lines):
-            # Only the test set has a header
-            if set_type == "test" and i == 0:
-                continue
-            guid = "%s-%s" % (set_type, i)
-            if set_type == "test":
-                text_a = tokenization.convert_to_unicode(line[1])
-                label = "0"
-            else:
-                text_a = tokenization.convert_to_unicode(line[3])
-                label = tokenization.convert_to_unicode(line[1])
-            examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
-        return examples
 
 
 def convert_single_example(ex_index, example, label_list, max_seq_length,
@@ -707,17 +556,17 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
                     labels=label_ids, predictions=predictions, weights=is_real_example)
                 loss = tf.metrics.mean(
                     values=per_example_loss, weights=is_real_example)
-                f1 = tf.contrib.metrics.f1_score(
-                    labels=label_ids, predictions=predictions, weights=is_real_example)
-                r = tf.metrics.recall(
-                    labels=label_ids, predictions=predictions, weights=is_real_example)
-                p = tf.metrics.precision(
-                    labels=label_ids, predictions=predictions, weights=is_real_example)
+                # f1 = tf.contrib.metrics.f1_score(
+                #     labels=label_ids, predictions=predictions, weights=is_real_example)
+                # r = tf.metrics.recall(
+                #     labels=label_ids, predictions=predictions, weights=is_real_example)
+                # p = tf.metrics.precision(
+                #     labels=label_ids, predictions=predictions, weights=is_real_example)
 
                 return {
-                    'r': r,
-                    'p': p,
-                    'f1': f1,
+                    # 'r': r,
+                    # 'p': p,
+                    # 'f1': f1,
                     "eval_accuracy": accuracy,
                     "eval_loss": loss,
                 }
@@ -816,12 +665,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
 def main(_):
     tf.logging.set_verbosity(tf.logging.INFO)
 
-    processors = {
-        "cola": ColaProcessor,
-        "semeval2017task4": SemEval2017Task4Processor,
-        "mrpc": MrpcProcessor,
-        "xnli": XnliProcessor,
-    }
+    processors = {"semeval2017task4": SemEval2017Task4Processor}
 
     tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
                                                   FLAGS.init_checkpoint)
@@ -1005,8 +849,8 @@ def main(_):
                 num_written_lines += 1
         assert num_written_lines == num_actual_predict_examples
         predict = [np.argmax(np.array(ii)) for ii in result]
-        label = processor.text_Y
-        p, r, f1, _, _, acc = load_result_f1(predict, evalY)
+        # label = processor.text_Y
+        # p, r, f1, _, _, acc = load_result_f1(predict, label)
 
 
 if __name__ == "__main__":
@@ -1014,5 +858,5 @@ if __name__ == "__main__":
     flags.mark_flag_as_required("task_name")
     flags.mark_flag_as_required("vocab_file")
     flags.mark_flag_as_required("bert_config_file")
-    flags.mark_flag_as_required("output_dir")
+    # flags.mark_flag_as_required("output_dir")
     tf.app.run()
