@@ -43,7 +43,7 @@ venv.bak
 
 # paper
 # paper
-*.pdf
+paper/*.pdf
 
 # Installer logs
 pip-log.txt
