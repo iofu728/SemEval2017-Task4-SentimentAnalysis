@@ -8,6 +8,8 @@ Classify Problem:
 - negative
 - neutral sentiment
 
+[Final paper](https://github.com/iofu728/SemEval2017-Task4-SentimentAnalysis/blob/master/paper/final_paper/main.pdf)
+
 ## Data info
 
 have emoji(maybe very important)
@@ -18,6 +20,9 @@ have emoji(maybe very important)
 | Test  | 5937/48.33%  | 3972/32.33%  | 2375/19.33% |
 
 ## Paper reading
+
+- ["DataStories at SemEval-2017 Task 4: Deep LSTM with Attention for Message-level and Topic-based Sentiment Analysis"](https://aclweb.org/anthology/S17-2126) TextProcessior + BiLSTM + Attention
+- ["BB twtr at SemEval-2017 Task 4: Twitter Sentiment Analysis with CNNs and LSTMs"](https://arxiv.org/pdf/1704.06125.pdf) TextCNNs + LSTMs
 
 ## Naive Idea
 
@@ -65,6 +70,19 @@ have emoji(maybe very important)
 | ----- | --------- | ------------ | ----- | ----- | ----- | ----- | ----- | ----- | ----- |
 | Bert  | no        | no           | 68.52 | 70.54 | 69.52 | 69.48 | 73.39 | 66.21 | 72.03 |
 | Bert  | no        | ekphrasis    | 69.32 | 70.51 | 69.91 | 70.03 | 71.75 | 68.52 | 71.27 |
+
+## Hyper-parameters
+
+### TextCNN
+
+### Bert
+
+- `batch size`: for train/eval/predict
+- `max seq len`: truncated/padded 
+- `learning rate`: learning rate for Adam
+- `epochs`: epochs for train
+- **`warmup_proportion`**: In warmup model, the learning rate will be smaller than normal lr.`if global_step < num_warmup_steps {learning_rate = global_step/num_warmup_steps * init_lr}`
+- 
 
 ## Trouble Shooting
 
@@ -130,6 +148,8 @@ tf record memory overflow. This situation happen on train time.
 
 [DataLossError (see above for traceback): corrupted record at 12](https://github.com/tensorflow/tensorflow/issues/13463)
 
+### Caused by op 'IteratorGetNext', defined at:
+
 ## Some py skill
 
 ### glob -> to match pattern file list
@@ -149,4 +169,26 @@ using blank instead of \n in the end
 ```python
 from __future__ import print_function
 ```
+
+### Tensorflow
+
+```python
+tf.logging.set_verbosity(tf.logging.INFO)  # set threshold what messages will be logged.
+tf.python_io.TFRecordWrite(path) # interface: write, close, flush, 
+# https://www.tensorflow.org/api_docs/python/tf/io/TFRecordWriter
+tf.train.Feature(int64_list=tf.train.Int64List(value=[]) # return tf.train.Example
+tf.train.Example(features=tf.train.Features(feature={}))
+writer.write(tf_example.SerializeToString) # serialization
+tf.parse_single_example() # deserialization
+
+tf.data.TFRecordDataset() # comprising records from one or more TFRecord files.
+# interface: apply, batch, cache, concatenate, filter, flat_map, from_generator, map, range, reduce, repeat, shuffle, skip, window, zip https://www.tensorflow.org/api_docs/python/tf/data/TFRecordDataset
+tf.trainable_variables() # return trainable params list
+```
+
+### isInstance(a, b)
+
+> checks if the object (first argument) is an instance or subclass of classinfo class (second argument).
+
+
 
